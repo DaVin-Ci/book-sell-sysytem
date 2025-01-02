@@ -1,3 +1,6 @@
+// 封装项目的所有axios请求
+// 包括设置请求前缀和超时时间、添加请求拦截器用于JWT认证、添加响应拦截器用于统一返回错误信息
+
 import axios from 'axios'
 import { MessageBox, Message } from 'element-ui'
 import store from '@/store'
@@ -5,32 +8,32 @@ import { getToken } from '@/utils/auth'
 
 // create an axios instance
 const service = axios.create({
-  baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
+  // ！！这里会读取环境变量process.env.VUE_APP_BASE_API的值(编译构建时会被替换为真正的值)来动态设置，所以会加上初始设置的'/dev_api'前缀
+  // 方便在不同环境中使用不同的api地址
+  baseURL: process.env.VUE_APP_BASE_API, // 服务器地址  (url = base url + request url)
   // withCredentials: true, // send cookies when cross-domain requests
-  timeout: 5000 // request timeout
+  timeout: 5000 // 设置请求超时事件
 })
 
-// request interceptor
+// 请求拦截器
 service.interceptors.request.use(
   config => {
-    // do something before request is sent
-
+    // 判断请求是否需要携带token
     if (store.getters.token) {
       // let each request carry token
       // ['X-Token'] is a custom headers key
       // please modify it according to the actual situation
-      config.headers['X-Token'] = getToken()
+      config.headers['X-Token'] = getToken() // 把token添加到请求头当中
     }
     return config
   },
   error => {
-    // do something with request error
-    console.log(error) // for debug
+    console.log(error)
     return Promise.reject(error)
   }
 )
 
-// response interceptor
+// 响应拦截器
 service.interceptors.response.use(
   /**
    * If you want to get http information such as headers or status
